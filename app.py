@@ -141,6 +141,19 @@ input[aria-autocomplete="list"] {
     background: #0d1f35 !important;
     border: 1px solid #1e3a5f !important;
 }
+
+/* ── MOBILE RESPONSIVE ── */
+@media (max-width: 768px) {
+    .block-container { padding: 0.5rem !important; }
+    [data-testid="stSidebar"] { min-width: 200px !important; }
+    h1 { font-size: 1.6rem !important; }
+    .sl-metrics { grid-template-columns: repeat(2,1fr) !important; }
+    .stTabs [data-baseweb="tab"] { font-size: 0.65rem !important; padding: 6px 8px !important; }
+}
+@media (max-width: 480px) {
+    .sl-metrics { grid-template-columns: repeat(1,1fr) !important; }
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -1623,70 +1636,40 @@ st.markdown(f'<div class="sl-ticker">{"".join(ticker_parts)}</div>', unsafe_allo
 # ROUTING
 # ══════════════════════════════════════════════════════════════════════
 
-# ── SIDEBAR — always visible for navigation ──────────────────────────────────
+# ── SIDEBAR — 3 plants only ──────────────────────────────────────────────────
 _cur_plant = st.session_state.get("plant","")
-_cur_comp  = st.session_state.get("comp","")
-_cur_ind   = st.session_state.get("ind","")
 
 with st.sidebar:
-    # Brand
-    st.markdown('''<div style="padding:10px 4px 6px;text-align:center;border-bottom:1px solid #1e3a5f;margin-bottom:.5rem">
-  <div style="font-size:1.3rem;font-weight:900;color:#fff;letter-spacing:-1px">PSI<b style="color:#3b82f6">Pro</b></div>
-  <div style="font-size:.54rem;font-weight:700;letter-spacing:2px;color:#3b82f6;margin-top:2px">PROCESS SAFETY PLATFORM</div>
-  <div style="font-size:.5rem;color:#475569;margin-top:2px">Tata Steel TCIL Golmuri</div>
+    st.markdown('''<div style="padding:10px 4px 8px;text-align:center;border-bottom:1px solid #1e3a5f;margin-bottom:.5rem">
+  <div style="font-size:1.2rem;font-weight:900;color:#fff;letter-spacing:-1px">PSI<b style="color:#3b82f6">Pro</b></div>
+  <div style="font-size:.52rem;font-weight:700;letter-spacing:2px;color:#3b82f6;margin-top:2px">PROCESS SAFETY PLATFORM</div>
+  <div style="font-size:.5rem;color:#475569;margin-top:2px">TCIL Golmuri · Tata Steel</div>
 </div>''', unsafe_allow_html=True)
 
-    # Home button
-    if st.button("⌂  Home — All Plants", key="sb_home_btn", use_container_width=True, type="primary"):
-        st.session_state.plant = None
-        st.session_state.comp  = None
-        st.session_state.ind   = None
-        st.rerun()
+    THREE_PLANTS = [
+        ("ETL-1  -  Electrolytic Tinning Line 1",  "ETL-1",       "HHO", "#f97316"),
+        ("Hydrogen Plant  -  H2 Production & Supply","H2 Plant",   "HHO", "#ef4444"),
+        ("Propane Yard  -  Decantation, Storage & Supply","Propane","HHO","#f97316"),
+    ]
 
-    # Breadcrumb
+    st.markdown('<div style="font-size:.58rem;font-weight:700;letter-spacing:1.5px;color:#475569;text-transform:uppercase;padding:4px 2px 4px">SELECT PLANT</div>', unsafe_allow_html=True)
+    for _full, _short, _status, _clr in THREE_PLANTS:
+        _active = (_cur_plant == _full)
+        _label = f"{'▶  ' if _active else ''}{_short}  [{_status}]"
+        if st.button(_label, key=f"sb3_{_full[:10]}", use_container_width=True,
+                     type="primary" if _active else "secondary"):
+            st.session_state.ind   = "Steel & Metal"
+            st.session_state.comp  = "Tata Steel - Tinplate (TCIL), Golmuri"
+            st.session_state.plant = _full
+            st.rerun()
+
     if _cur_plant:
-        short = _cur_plant.split("  -  ")[0]
-        st.markdown(f'<div style="font-size:.6rem;color:#475569;padding:4px 2px;font-family:monospace">You are in: {short}</div>', unsafe_allow_html=True)
-
-    st.markdown('<div style="font-size:.58rem;font-weight:700;letter-spacing:2px;color:#3b82f6;text-transform:uppercase;padding:8px 2px 3px">TATA STEEL · TCIL GOLMURI</div>', unsafe_allow_html=True)
-
-    TCIL_NAV = {
-        "Tinplate Operations": [
-            ("ETL-1","ETL-1  -  Electrolytic Tinning Line 1"),
-            ("ETL-2","ETL-2  -  Electrolytic Tinning Line 2"),
-            ("CRM","CRM  -  Cold Rolling Mill"),
-            ("TFS","TFS  -  Tin Free Steel"),
-            ("GI/GA","Galvanizing Line (GI/GA)"),
-            ("CCS","Colour Coated Sheet (CCS)"),
-        ],
-        "Utilities": [
-            ("H2 Plant","Hydrogen Plant  -  H2 Production & Supply"),
-            ("Propane Yard","Propane Yard  -  Decantation, Storage & Supply"),
-        ],
-    }
-    _nav_idx = 0
-    for _div, _plants in TCIL_NAV.items():
-        st.markdown(f'<div style="font-size:.55rem;font-weight:700;letter-spacing:1.5px;color:#475569;text-transform:uppercase;padding:5px 2px 2px;border-top:1px solid #1e3a5f;margin-top:4px">{_div}</div>', unsafe_allow_html=True)
-        for _short, _full in _plants:
-            _nav_idx += 1
-            _pm = PLANT_META.get(_full, {})
-            _s  = _pm.get("status","")
-            _active = (_cur_plant == _full)
-            _has_psi = bool(_pm)
-            _badge = f" [{_s}]" if _s else ""
-            _label = f"{'▶ ' if _active else ''}{_short}{_badge}"
-            if _has_psi:
-                if st.button(_label, key=f"nav_{_nav_idx}", use_container_width=True,
-                             type="primary" if _active else "secondary"):
-                    st.session_state.ind   = "Steel & Metal"
-                    st.session_state.comp  = "Tata Steel - Tinplate (TCIL), Golmuri"
-                    st.session_state.plant = _full
-                    st.rerun()
-            else:
-                st.button(f"{_short} (PSI pending)", key=f"nav_{_nav_idx}",
-                          use_container_width=True, disabled=True)
-
-# ─────────────────────────────────────────────────────────────────────────────
+        st.markdown('<hr style="border:none;border-top:1px solid #1e3a5f;margin:.6rem 0">', unsafe_allow_html=True)
+        if st.button("⌂  Home", key="sb3_home", use_container_width=True):
+            st.session_state.plant = None
+            st.session_state.comp  = None
+            st.session_state.ind   = None
+            st.rerun()
 
 if st.session_state.plant:
     plant = st.session_state.plant
@@ -5273,241 +5256,101 @@ if st.session_state.plant:
 # HOME PAGE
 # ══════════════════════════════════════════════════════════════════════
 else:
-    # ── FRONT PAGE ────────────────────────────────────────────
-    IND_META = {
-        "Steel & Metal":   {"color":"#f97316","risk":"HIGH",    "incidents":2847,"icon":"S&M","desc":"Integrated steel plants, rolling mills, coating lines and associated utilities."},
-        "Pharma":          {"color":"#a78bfa","risk":"MEDIUM",  "incidents":892, "icon":"RX","desc":"API synthesis, formulation, sterile injectables and packaging operations."},
-        "Oil & Gas":       {"color":"#ef4444","risk":"CRITICAL","incidents":5621,"icon":"O&G","desc":"Refineries, offshore platforms, pipelines and LPG/propane handling."},
-        "Food & Beverage": {"color":"#22c55e","risk":"LOW",     "incidents":341, "icon":"F&B","desc":"Processing, bottling and packaging lines with ammonia refrigeration and CO2 systems."},
-        "Chemicals":       {"color":"#06b6d4","risk":"HIGH",    "incidents":3194,"icon":"CHEM","desc":"Chlor-alkali, electrolysis, bulk chemical storage and reaction units."},
-    }
-
-    # ── WELCOME HERO ──────────────────────────────────────────
+    # ── LANDING PAGE — 3 plants only ─────────────────────────────────────────
     st.markdown("""
-    <div style="background:linear-gradient(135deg,#020818 0%,#0a1628 40%,#0d1f35 70%,#060d1a 100%);
-                padding:3rem 2rem 2.5rem;border-bottom:2px solid #1e3a5f;margin:0 -1rem 0 -1rem;
-                position:relative;overflow:hidden">
-      <div style="position:absolute;top:-60px;right:-60px;width:300px;height:300px;
-                  background:radial-gradient(circle,rgba(59,130,246,.08) 0%,transparent 70%);
-                  border-radius:50%"></div>
-      <div style="position:absolute;bottom:-40px;left:-40px;width:200px;height:200px;
-                  background:radial-gradient(circle,rgba(249,115,22,.06) 0%,transparent 70%);
-                  border-radius:50%"></div>
-
-      <div style="display:inline-flex;align-items:center;gap:8px;
-                  background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);
-                  border-radius:20px;padding:4px 16px;margin-bottom:1.2rem">
-        <div style="width:7px;height:7px;border-radius:50%;background:#22c55e;
-                    box-shadow:0 0 10px #22c55e"></div>
-        <span style="color:#60a5fa;font-size:.68rem;font-weight:700;letter-spacing:2px">LIVE  ·  PSI/PSM PLATFORM</span>
+    <div style="background:#0a1628;padding:2rem 1.5rem 1.5rem;border-bottom:2px solid #1e3a5f;margin:0 -1rem 1.5rem -1rem">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+        <div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:20px;padding:3px 12px">
+          <span style="color:#22c55e;font-size:.62rem;font-weight:700;letter-spacing:1.5px">● LIVE</span>
+        </div>
+        <div style="background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.3);border-radius:20px;padding:3px 12px">
+          <span style="color:#f97316;font-size:.62rem;font-weight:700">TATA STEEL · TCIL GOLMURI</span>
+        </div>
       </div>
-
-      <div style="font-size:.65rem;font-weight:700;letter-spacing:3px;color:#3b82f6;margin-bottom:.5rem;text-transform:uppercase">Welcome to</div>
-      <h1 style="font-size:3rem;font-weight:900;color:#ffffff;letter-spacing:-2px;line-height:1;margin-bottom:.5rem">
+      <h1 style="font-size:2rem;font-weight:900;color:#fff;letter-spacing:-1px;margin:0 0 .4rem 0">
         PSI<span style="color:#3b82f6">Pro</span>
-        <span style="font-size:1.2rem;font-weight:400;color:#475569;letter-spacing:0;vertical-align:middle;margin-left:.5rem">PSI / PSM Platform</span>
+        <span style="font-size:.9rem;font-weight:400;color:#475569;margin-left:.5rem">Process Safety Intelligence Platform</span>
       </h1>
-      <div style="font-size:1.05rem;color:#94a3b8;margin-bottom:.4rem;font-weight:500">
-        Your one-stop destination for <b style="color:#60a5fa">Process Safety Information</b> — TCIL Golmuri
-      </div>
-      <div style="font-size:.8rem;color:#475569;margin-bottom:1.4rem;line-height:1.7">
-        Tata Steel Tinplate (TCIL) Golmuri · Tata Steel Jamshedpur · JSW Steel · AM/NS India · SAIL<br>
-        Real PSI/PSM plant hierarchy · Live risk monitoring · HHO/LHO classification · PSRM framework
-      </div>
-
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <span style="background:rgba(249,115,22,.15);border:1px solid rgba(249,115,22,.3);
-                     color:#f97316;font-size:.68rem;font-weight:700;padding:5px 14px;border-radius:20px">
-          PSRM Framework
-        </span>
-        <span style="background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);
-                     color:#22c55e;font-size:.68rem;font-weight:700;padding:5px 14px;border-radius:20px">
-          Real Excel Data
-        </span>
-        <span style="background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.3);
-                     color:#a78bfa;font-size:.68rem;font-weight:700;padding:5px 14px;border-radius:20px">
-          HHO / LHO Classification
-        </span>
-        <span style="background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);
-                     color:#60a5fa;font-size:.68rem;font-weight:700;padding:5px 14px;border-radius:20px">
-          HAZOP · Bow Tie · Barriers
-        </span>
-      </div>
+      <p style="font-size:.82rem;color:#64748b;margin:0;line-height:1.6">
+        Digital PSI/PSM for ETL-1 · Hydrogen Plant · Propane Yard — HAZOP, Bow Tie, HHO/LHO, SOC/SOL from real Excel data.
+      </p>
     </div>
     """, unsafe_allow_html=True)
 
-    # ── What's inside strip ───────────────────────────────────
-    st.markdown("""
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#1e3a5f;
-                border:1px solid #1e3a5f;border-radius:0;margin:0 -1rem 1.5rem -1rem">
-      <div style="background:#080d18;padding:1rem 1.4rem;text-align:center">
-        <div style="font-size:1.4rem;font-weight:900;color:#f97316;font-family:monospace">5</div>
-        <div style="font-size:.55rem;font-weight:700;letter-spacing:1.5px;color:#475569;margin-top:2px">INDUSTRIES</div>
-      </div>
-      <div style="background:#080d18;padding:1rem 1.4rem;text-align:center">
-        <div style="font-size:1.4rem;font-weight:900;color:#22c55e;font-family:monospace">5</div>
-        <div style="font-size:.55rem;font-weight:700;letter-spacing:1.5px;color:#475569;margin-top:2px">PSI PROFILES LIVE</div>
-      </div>
-      <div style="background:#080d18;padding:1rem 1.4rem;text-align:center">
-        <div style="font-size:1.4rem;font-weight:900;color:#a78bfa;font-family:monospace">9</div>
-        <div style="font-size:.55rem;font-weight:700;letter-spacing:1.5px;color:#475569;margin-top:2px">COMPANIES / SITES</div>
-      </div>
-      <div style="background:#080d18;padding:1rem 1.4rem;text-align:center">
-        <div style="font-size:1.4rem;font-weight:900;color:#3b82f6;font-family:monospace">150+</div>
-        <div style="font-size:.55rem;font-weight:700;letter-spacing:1.5px;color:#475569;margin-top:2px">PSCE ITEMS</div>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # 3 plant cards
+    LANDING_PLANTS = [
+        {
+            "full": "ETL-1  -  Electrolytic Tinning Line 1",
+            "name": "ETL-1",
+            "subtitle": "Electrolytic Tinning Line 1",
+            "cls": "HHO",
+            "color": "#f97316",
+            "desc": "6 processes · 6 chemicals · 24 PDB params · 77 PSCE items · Full HAZOP + Bow Tie",
+            "tabs": "PSC · HOM · CIM · PDB · PSCE · EDB · Parameters",
+        },
+        {
+            "full": "Hydrogen Plant  -  H2 Production & Supply",
+            "name": "H2 Plant",
+            "subtitle": "Hydrogen Production & Supply",
+            "cls": "HHO",
+            "color": "#3b82f6",
+            "desc": "6 processes (5 HHO) · 3 chemicals · 24 PDB params · 44 PSCE items · Full HAZOP + Bow Tie",
+            "tabs": "PSC · HOM · CIM · PDB · PSCE · EDB · Parameters",
+        },
+        {
+            "full": "Propane Yard  -  Decantation, Storage & Supply",
+            "name": "Propane Yard",
+            "subtitle": "Decantation, Storage & Supply",
+            "cls": "HHO",
+            "color": "#f97316",
+            "desc": "4 processes (all HHO) · 56 MT inventory · 11 PDB params · 19 PSCE items · Full HAZOP + Bow Tie",
+            "tabs": "PSC · HOM · CIM · PDB · PSCE · EDB",
+        },
+    ]
 
-    # ── What SafetyLens covers ────────────────────────────────
-    st.markdown("""<div style="background:#0d1f35;border:1px solid #1e3a5f;border-radius:12px;
-                                padding:1.2rem 1.6rem;margin-bottom:1.5rem">
-      <div style="font-size:.68rem;font-weight:700;letter-spacing:2px;color:#3b82f6;
-                  text-transform:uppercase;margin-bottom:.8rem">What SafetyLens contains for each plant</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;font-size:.78rem">
-        <div style="color:#94a3b8"><b style="color:#f97316">PSC</b> — Process Safety Classification (HHO/LHO)</div>
-        <div style="color:#94a3b8"><b style="color:#f97316">HOM</b> — Hazard of Materials (TLV, LEL, IDLH)</div>
-        <div style="color:#94a3b8"><b style="color:#f97316">CIM</b> — Chemical Interaction Matrix</div>
-        <div style="color:#94a3b8"><b style="color:#f97316">PDB</b> — Process Design Basis (SOC / SOL limits)</div>
-        <div style="color:#94a3b8"><b style="color:#f97316">PSCE</b> — Safety Critical Equipment list</div>
-        <div style="color:#94a3b8"><b style="color:#f97316">EDB</b> — Equipment Design Basis (SAP IDs)</div>
-        <div style="color:#94a3b8"><b style="color:#22c55e">HAZOP</b> — What-if deviation analysis per process</div>
-        <div style="color:#94a3b8"><b style="color:#22c55e">Bow Tie</b> — Causes · Preventions · Mitigations</div>
-        <div style="color:#94a3b8"><b style="color:#22c55e">QA Bot</b> — Ask about any PSM term or process</div>
-      </div>
-    </div>""", unsafe_allow_html=True)
-
-    # ── Live Accident Report  ─────────────────────────────────
-    if not st.session_state.ind:
-        st.markdown("""<div style="font-size:.68rem;font-weight:700;letter-spacing:2px;color:#3b82f6;
-                        text-transform:uppercase;margin:1.5rem 0 .6rem;padding-bottom:6px;border-bottom:1px solid #1e3a5f">
-            Live Accident Report  -  Recent Industry Incidents</div>""", unsafe_allow_html=True)
-        SEV_COLOR = {"L1":"#22c55e","L2":"#eab308","L3":"#f97316","L4":"#ef4444","L5":"#7f1d1d"}
-        SEV_LABEL = {"L1":"L1 - Minor","L2":"L2 - Moderate","L3":"L3 - Serious","L4":"L4 - Critical","L5":"L5 - Catastrophic"}
-        for acc in ACCIDENTS:
-            sev = acc.get("severity","L2")
-            sc = SEV_COLOR.get(sev, "#64748b")
-            st.markdown(f"""<div style="background:#0d1f35;border:1px solid #1e3a5f;border-left:4px solid {sc};border-radius:10px;padding:.9rem 1.2rem;margin-bottom:8px">
-              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:.4rem">
-                <div>
-                  <span style="font-size:.6rem;font-weight:700;letter-spacing:1px;color:#475569;text-transform:uppercase">{acc['industry']} &middot; {acc['plant']} &middot; {acc['year']}</span><br>
-                  <span style="font-size:.86rem;font-weight:700;color:#e2e8f0">{acc['incident']}</span>
-                </div>
-                <span style="background:{sc}20;color:{sc};border:1px solid {sc}50;font-size:.62rem;font-weight:800;padding:3px 10px;border-radius:6px;white-space:nowrap">{SEV_LABEL.get(sev,sev)}</span>
+    cols = st.columns(3)
+    for i, p in enumerate(LANDING_PLANTS):
+        c = p["color"]
+        with cols[i]:
+            st.markdown(f"""<div style="background:#0d1f35;border:1px solid #1e3a5f;
+                border-top:4px solid {c};border-radius:12px;padding:1.2rem;margin-bottom:8px;min-height:200px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:.6rem">
+                <span style="background:{c}20;color:{c};font-size:.62rem;font-weight:800;
+                      padding:3px 10px;border-radius:20px;border:1px solid {c}50">{p["cls"]}</span>
               </div>
-              <div style="font-size:.76rem;color:#94a3b8;line-height:1.6"><b style="color:#60a5fa">Lesson Learned:</b> {acc['lesson']}</div>
+              <div style="font-size:1.1rem;font-weight:800;color:#e2e8f0;margin-bottom:.2rem">{p["name"]}</div>
+              <div style="font-size:.7rem;color:#475569;margin-bottom:.8rem">{p["subtitle"]}</div>
+              <div style="font-size:.72rem;color:#64748b;line-height:1.6;margin-bottom:.8rem">{p["desc"]}</div>
+              <div style="font-size:.6rem;color:#3b82f6;font-family:monospace">{p["tabs"]}</div>
             </div>""", unsafe_allow_html=True)
-
-    # ── Step 1 — Industry ──
-    st.markdown("""<div style="font-size:.68rem;font-weight:700;letter-spacing:2px;color:#3b82f6;
-                    text-transform:uppercase;margin:1.5rem 0 .6rem;padding-bottom:6px;border-bottom:1px solid #1e3a5f">
-        Step 1 — Select Industry Sector</div>""", unsafe_allow_html=True)
-
-    risk_clr_map = {"CRITICAL":"#ef4444","HIGH":"#f97316","MEDIUM":"#eab308","LOW":"#22c55e"}
-    ind_cols = st.columns(len(HIERARCHY))
-    for i, ind in enumerate(HIERARCHY.keys()):
-        im = IND_META.get(ind, {})
-        clr = im.get("color", "#3b82f6")
-        n_comp = len(HIERARCHY[ind])
-        n_plants = sum(len(p) for d in HIERARCHY[ind].values() for p in d.values())
-        risk_level = im.get("risk","")
-        risk_clr = risk_clr_map.get(risk_level, "#64748b")
-        active = (st.session_state.ind == ind)
-        with ind_cols[i]:
-            st.markdown(f"""<div style="background:{'rgba(29,78,216,.15)' if active else '#0d1f35'};
-                border:1px solid {'#1d4ed8' if active else '#1e3a5f'};
-                border-top:3px solid {clr};border-radius:10px;padding:1rem;
-                margin-bottom:6px;text-align:center;min-height:148px">
-              <div style="display:inline-block;background:{clr}20;color:{clr};border:1px solid {clr}50;font-size:.65rem;font-weight:800;letter-spacing:1px;padding:3px 10px;border-radius:6px;margin-bottom:6px">{im.get('icon','GEN')}</div>
-              <div style="font-size:.8rem;font-weight:700;color:{clr};margin-bottom:4px">{ind}</div>
-              <div style="font-size:.65rem;color:#475569;margin-bottom:8px">{im.get('incidents',0):,} incidents on file</div>
-              <div style="font-size:.7rem;color:{risk_clr};font-weight:700;margin-bottom:4px">{risk_level} RISK</div>
-              <div style="font-size:.65rem;color:#64748b">{n_comp} companies &middot; {n_plants} plants</div>
-            </div>""", unsafe_allow_html=True)
-            if st.button("Select", key=f"ind_{ind}", use_container_width=True,
-                         type="primary" if active else "secondary"):
-                st.session_state.ind = ind
-                st.session_state.comp = None
-                st.session_state.plant = None
+            if st.button(f"Open  {p['name']}", key=f"lp_{i}", use_container_width=True, type="primary"):
+                st.session_state.ind   = "Steel & Metal"
+                st.session_state.comp  = "Tata Steel - Tinplate (TCIL), Golmuri"
+                st.session_state.plant = p["full"]
                 st.rerun()
 
-    # ── Steps 2 & 3 — Company then Plant (only when industry selected) ──
-    if st.session_state.ind:
-        ind_name = st.session_state.ind
-        crumb_parts = [f'<span style="color:#3b82f6;font-weight:700">{ind_name}</span>']
-        if st.session_state.comp:
-            crumb_parts.append(f'<span style="color:#94a3b8">{st.session_state.comp}</span>')
-        if st.session_state.plant:
-            crumb_parts.append(f'<span style="color:#e2e8f0">{st.session_state.plant}</span>')
-        bc1, bc2 = st.columns([5,1])
-        with bc1:
-            st.markdown(f'<div style="font-size:.72rem;color:#64748b;padding:.4rem 0">{"  ›  ".join(crumb_parts)}</div>', unsafe_allow_html=True)
-        with bc2:
-            if st.button("◀ Back", key="nav_back", use_container_width=True):
-                if st.session_state.plant:
-                    st.session_state.plant = None
-                elif st.session_state.comp:
-                    st.session_state.comp = None
-                else:
-                    st.session_state.ind = None
-                st.rerun()
-
-        st.markdown(f"""<div style="font-size:.68rem;font-weight:700;letter-spacing:2px;color:#3b82f6;
-                        text-transform:uppercase;margin:1rem 0 .6rem;padding-bottom:6px;border-bottom:1px solid #1e3a5f">
-            Step 2 — Select Company / Site <span style="color:#475569;font-style:italic;letter-spacing:0;text-transform:none;font-weight:400;font-size:.8rem">/ {ind_name}</span></div>""", unsafe_allow_html=True)
-
-        comps = list(HIERARCHY[ind_name].keys())
-        for row_start in range(0, len(comps), 3):
-            row_c = comps[row_start:row_start+3]
-            cols = st.columns(3)
-            for i, comp in enumerate(row_c):
-                divisions = HIERARCHY[ind_name][comp]
-                n_div = len(divisions)
-                n_p = sum(len(v) for v in divisions.values())
-                active = (st.session_state.comp == comp)
-                with cols[i]:
-                    st.markdown(f"""<div style="background:{'rgba(29,78,216,.15)' if active else '#0d1f35'};
-                        border:1px solid {'#1d4ed8' if active else '#1e3a5f'};border-radius:10px;
-                        padding:.9rem;margin-bottom:6px">
-                      <div style="font-size:.82rem;font-weight:700;color:#e2e8f0;margin-bottom:4px">{comp}</div>
-                      <div style="font-size:.68rem;color:#64748b">{n_div} divisions &middot; {n_p} plants/processes</div>
-                    </div>""", unsafe_allow_html=True)
-                    if st.button("Open", key=f"comp_{comp}", use_container_width=True,
-                                  type="primary" if active else "secondary"):
-                        st.session_state.comp = comp
-                        st.session_state.plant = None
-                        st.rerun()
-
-        if st.session_state.comp:
-            comp_name = st.session_state.comp
-            st.markdown(f"""<div style="font-size:.68rem;font-weight:700;letter-spacing:2px;color:#3b82f6;
-                            text-transform:uppercase;margin:1rem 0 .6rem;padding-bottom:6px;border-bottom:1px solid #1e3a5f">
-                Step 3 — Select Plant / Process <span style="color:#475569;font-style:italic;letter-spacing:0;text-transform:none;font-weight:400;font-size:.8rem">/ {comp_name}</span></div>""", unsafe_allow_html=True)
-
-            divisions = HIERARCHY[ind_name][comp_name]
-            for div_name, plant_list in divisions.items():
-                st.markdown(f'<div style="font-size:.62rem;font-weight:700;letter-spacing:2px;color:#475569;padding:6px 0 4px;text-transform:uppercase">{div_name}</div>', unsafe_allow_html=True)
-                for row_start in range(0, len(plant_list), 3):
-                    row_pp = plant_list[row_start:row_start+3]
-                    cols = st.columns(3)
-                    for i, p in enumerate(row_pp):
-                        pm = PLANT_META.get(p, {})
-                        status = pm.get("status", "")
-                        has_psi = p in PLANT_META
-                        active = (st.session_state.plant == p)
-                        badge_clr = "#f97316" if status == "HHO" else "#3b82f6"
-                        with cols[i]:
-                            st.markdown(f"""<div style="background:{'rgba(29,78,216,.15)' if active else '#0d1f35'};
-                                border:1px solid {'#1d4ed8' if active else '#1e3a5f'};
-                                border-left:3px solid {badge_clr if status else '#1e3a5f'};border-radius:10px;
-                                padding:.8rem;margin-bottom:6px;min-height:62px">
-                              <div style="font-size:.78rem;font-weight:700;color:#e2e8f0;margin-bottom:4px">{p}</div>
-                              {f'<span style="background:{badge_clr}20;color:{badge_clr};font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:20px">{status}</span>' if status else '<span style="font-size:.62rem;color:#475569">PSI not yet available</span>'}
-                            </div>""", unsafe_allow_html=True)
-                            if has_psi:
-                                if st.button("Open", key=f"plant_{p}", use_container_width=True,
-                                              type="primary" if active else "secondary"):
-                                    st.session_state.plant = p
-                                    st.rerun()
-                            else:
-                                st.button("Open", key=f"plant_{p}", use_container_width=True, disabled=True)
+    # Accident feed below cards
+    st.markdown("""<div style="font-size:.65rem;font-weight:700;letter-spacing:2px;color:#ef4444;
+                    text-transform:uppercase;margin:1.5rem 0 .6rem;padding-bottom:6px;
+                    border-bottom:1px solid #1e3a5f">
+        Recent Industry Incidents</div>""", unsafe_allow_html=True)
+    SEV_COLOR = {"L1":"#22c55e","L2":"#eab308","L3":"#f97316","L4":"#ef4444","L5":"#7f1d1d"}
+    SEV_LABEL = {"L1":"Minor","L2":"Moderate","L3":"Serious","L4":"Critical","L5":"Catastrophic"}
+    for acc in ACCIDENTS:
+        sev = acc.get("severity","L2")
+        sc  = SEV_COLOR.get(sev,"#64748b")
+        st.markdown(f"""<div style="background:#0d1f35;border:1px solid #1e3a5f;
+              border-left:4px solid {sc};border-radius:8px;padding:.8rem 1.1rem;margin-bottom:6px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
+            <div>
+              <span style="font-size:.58rem;font-weight:700;color:#475569;letter-spacing:1px">
+                {acc['industry']} · {acc['plant']} · {acc['year']}</span><br>
+              <span style="font-size:.82rem;font-weight:700;color:#e2e8f0">{acc['incident']}</span>
+            </div>
+            <span style="background:{sc}20;color:{sc};border:1px solid {sc}50;
+                  font-size:.6rem;font-weight:800;padding:2px 9px;border-radius:6px;white-space:nowrap">
+              {SEV_LABEL.get(sev,sev)}</span>
+          </div>
+          <div style="font-size:.72rem;color:#94a3b8;margin-top:.4rem;line-height:1.5">
+            <b style="color:#60a5fa">Lesson:</b> {acc['lesson']}</div>
+        </div>""", unsafe_allow_html=True)
